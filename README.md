@@ -14,14 +14,14 @@ Description:
 
 Endpoints:
 
-/upload_file
+/upload_file <br>
 принимает файл
 
-/get_filfe:{file name}
+/get_filfe:{file name} <br>
 возвращает файл по названию
 
-/delete_file:{file name}
+/delete_file:{file name} <br>
 удаляет файл на сервере по названию
 
-/delete_all_files
+/delete_all_files <br>
 удаляет все загруженные файлы с сервера
