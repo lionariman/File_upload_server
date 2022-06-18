@@ -81,3 +81,10 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	bzeroChunks(chunkedBuf)
 	saveChunksIntoFolder(chunkedBuf)
 }
+
+func ServerShutdown(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Write([]byte("Server stopped"))
+	os.Exit(0)
+}
