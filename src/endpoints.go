@@ -10,6 +10,9 @@ import (
 	"strings"
 )
 
+// Endpoint: /delete_file:fileName.
+// Функция DeleteFile удаляет папку с названием файла,
+// в которой лежат ее мегабайты, с сервера
 func DeleteFile(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "DELETE" {
 		fmt.Printf("Wrong request method -> [%s]\n", r.Method)
@@ -32,6 +35,8 @@ func DeleteFile(w http.ResponseWriter, r *http.Request) {
 	PortionDirName = PortionDirNameTmp
 }
 
+// Endpoint: /get_file.
+// Функция GetFile восттанавливает файл из частей (мегабайтов) и возвращает его
 func GetFile(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		fmt.Printf("Wrong request method -> [%s]\n", r.Method)
@@ -57,6 +62,8 @@ func GetFile(w http.ResponseWriter, r *http.Request) {
 	w.Write(joinedChunks)
 }
 
+// Endpoint: /delete_all_files.
+// Функция DeleteAllFiles удаляет все папки с мегабайтами файлов с сервера
 func DeleteAllFiles(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "DELETE" {
 		fmt.Printf("Wrong request method -> [%s]\n", r.Method)
@@ -71,6 +78,9 @@ func DeleteAllFiles(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Endpoint: /upload_file.
+// Функция UploadFile принимает файл и делит его по частям на мегабайты
+// и сохраняет эти части в отдельной папке с названием файла
 func UploadFile(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		fmt.Printf("Wrong request method -> [%s]\n", r.Method)
@@ -98,6 +108,8 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	saveChunksIntoFolder(chunkedBuf)
 }
 
+// Endpoint: /shutdown.
+// Функция ServerShutdown выключает сервер
 func ServerShutdown(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusOK)
 	os.Exit(0)

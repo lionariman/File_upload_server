@@ -28,6 +28,7 @@ func main() {
 	defer close(done)
 }
 
+// Router
 func processor(w http.ResponseWriter, r *http.Request) {
 	src.Endpoint = r.URL.String()
 	if src.Endpoint == "/upload_file" {
