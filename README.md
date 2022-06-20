@@ -37,10 +37,10 @@
 ```curl -X POST http://localhost:8080/upload_file -F "file=@fileName.txt"```
 
 #### /get_file
-```curl http://localhost:8080/get_file:fileName > newFileName.txt```
+```curl -X GET http://localhost:8080/get_file:fileName > newFileName.txt```
 
 #### /delete_file
-```curl http://localhost:8080/delete_file:fileName```
+```curl -X DELETE http://localhost:8080/delete_file:fileName```
 
 #### /delete_all_files
-```curl http://localhost:8080/delete_all_files```
+```curl -X DELETE http://localhost:8080/delete_all_files```

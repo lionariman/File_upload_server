@@ -11,6 +11,10 @@ import (
 )
 
 func DeleteFile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "DELETE" {
+		fmt.Printf("Wrong request method -> [%s]\n", r.Method)
+		return
+	}
 	if strings.ContainsAny(Endpoint, ":") == false {
 		fmt.Printf("Empty item after [%s:___?___]\n", Endpoint)
 		return
@@ -29,6 +33,10 @@ func DeleteFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetFile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		fmt.Printf("Wrong request method -> [%s]\n", r.Method)
+		return
+	}
 	if strings.ContainsAny(Endpoint, ":") == false {
 		fmt.Printf("Empty item after [%s:___?___]\n", Endpoint)
 		return
@@ -50,6 +58,10 @@ func GetFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteAllFiles(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "DELETE" {
+		fmt.Printf("Wrong request method -> [%s]\n", r.Method)
+		return
+	}
 	fmt.Printf("[%s] delete all files in [%s]\n", r.Method, DirName)
 	err := os.RemoveAll(DirName + "/")
 	if err != nil {
@@ -60,6 +72,10 @@ func DeleteAllFiles(w http.ResponseWriter, r *http.Request) {
 }
 
 func UploadFile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		fmt.Printf("Wrong request method -> [%s]\n", r.Method)
+		return
+	}
 	fmt.Printf("[%s] upload [%s]\n", r.Method, r.URL.String())
 	r.ParseMultipartForm(500 << 20) // 500 mb
 	var buf bytes.Buffer
@@ -84,7 +100,5 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 
 func ServerShutdown(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Write([]byte("Server stopped"))
 	os.Exit(0)
 }
