@@ -12,36 +12,46 @@ import (
 )
 
 func main() {
-	handler := http.HandlerFunc(processor)
-	http.Handle("/", handler)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", processor)
+
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	srv := &http.Server{
+		Addr:    src.PortName,
+		Handler: mux,
+	}
+
 	go func() {
-		if err := http.ListenAndServe(src.PortName, nil); err != nil && err != http.ErrServerClosed {
+		log.Println("Server started on", src.PortName)
+		fmt.Println(src.Endpoints)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen: [%s]\n", err)
 		}
 	}()
-	log.Println("Server started")
-	fmt.Println(src.Endpoints)
+
 	<-done
-	log.Println("\nServer stopped")
-	defer close(done)
+	log.Println("\nServer stopping")
 }
 
 // Router
 func processor(w http.ResponseWriter, r *http.Request) {
-	src.Endpoint = r.URL.String()
-	if src.Endpoint == "/upload_file" {
+	path := r.URL.Path
+	if path == "/upload_file" {
 		src.UploadFile(w, r)
-	} else if strings.Split(src.Endpoint, ":")[0] == "/delete_file" {
-		src.DeleteFile(w, r)
-	} else if strings.Split(src.Endpoint, ":")[0] == "/get_file" {
-		src.GetFile(w, r)
-	} else if src.Endpoint == "/delete_all_files" {
+	} else if strings.HasPrefix(path, "/delete_file:") {
+		fileName := strings.TrimPrefix(path, "/delete_file:")
+		src.DeleteFile(w, r, fileName)
+	} else if strings.HasPrefix(path, "/get_file:") {
+		fileName := strings.TrimPrefix(path, "/get_file:")
+		src.GetFile(w, r, fileName)
+	} else if path == "/delete_all_files" {
 		src.DeleteAllFiles(w, r)
-	} else if src.Endpoint == "/shutdown" {
+	} else if path == "/shutdown" {
 		src.ServerShutdown(w)
 	} else {
-		fmt.Println("Wrong endpoint! ->", src.Endpoint)
+		fmt.Println("Wrong endpoint! ->", path)
+		http.NotFound(w, r)
 	}
 }
