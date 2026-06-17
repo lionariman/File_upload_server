@@ -8,7 +8,7 @@ import (
 )
 
 type FileMetadata struct {
-	OriginalSize int64 \`json:"original_size"\`
+	OriginalSize int64 `json:"original_size"`
 }
 
 func saveMetadata(fileName string, metadata FileMetadata) error {
