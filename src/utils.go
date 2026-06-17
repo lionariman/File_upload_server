@@ -1,93 +1,77 @@
 package src
 
 import (
-	"bytes"
-	"fmt"
-	"log"
+	"encoding/json"
 	"os"
+	"path/filepath"
 	"strconv"
 )
 
-func makeChunks(buf []byte) [][]byte {
-	var chunkedBuf [][]byte
-	var first, last int
-	for i := 0; i < len(buf)/ChunkSize+1; i++ {
-		first = i * ChunkSize
-		last = i*ChunkSize + ChunkSize
-		if last > len(buf) {
-			last = len(buf)
-		}
-		chunkedBuf = append(chunkedBuf, buf[first:last])
+type FileMetadata struct {
+	OriginalSize int64 \`json:"original_size"\`
+}
+
+func saveMetadata(fileName string, metadata FileMetadata) error {
+	targetDir := filepath.Join(DirName, fileName)
+	metadataPath := filepath.Join(targetDir, MetadataName)
+	data, err := json.Marshal(metadata)
+	if err != nil {
+		return err
 	}
-	return chunkedBuf
+	return os.WriteFile(metadataPath, data, 0644)
 }
 
-func unbzeroChunks(buf [][]byte) {
-	var lastElem int = len(buf) - 1
-	buf[lastElem] = bytes.Trim(buf[lastElem], "\x00")
-}
-
-func bzeroChunks(buf [][]byte) {
-	var lastElem int = len(buf) - 1
-	for ChunkSize > len(buf[lastElem]) {
-		buf[lastElem] = append(buf[lastElem], 0)
+func getMetadata(fileName string) (FileMetadata, error) {
+	var metadata FileMetadata
+	targetDir := filepath.Join(DirName, fileName)
+	metadataPath := filepath.Join(targetDir, MetadataName)
+	data, err := os.ReadFile(metadataPath)
+	if err != nil {
+		return metadata, err
 	}
+	err = json.Unmarshal(data, &metadata)
+	return metadata, err
 }
 
-func createDirectories() {
-	err := os.MkdirAll(DirName+"/"+PortionDirName, 0777)
-	if os.IsExist(err) == true {
-		fmt.Printf("[%s] already exists\n", DirName)
-	} else if err != nil {
-		log.Fatal(err)
-	}
-	PortionDirName = PortionDirNameTmp
-}
-
-func saveChunksIntoFolder(buf [][]byte) {
-	var template string = DirName + "/" + PortionDirName + "/" + PortionName
-	createDirectories()
-	for i := range buf {
-		err := os.WriteFile(template+strconv.Itoa(i), buf[i], 0777)
-		if err != nil {
-			log.Fatal()
-		}
-	}
-}
-
-func unboxChunksFromFolder() ([][]byte, error) {
+func unboxChunksFromFolder(fileName string) ([][]byte, error) {
 	var chunks [][]byte
-	var template string = DirName + "/" + PortionDirName + "/" + PortionName
-	var i int = 0
+	targetDir := filepath.Join(DirName, fileName)
+
+	i := 0
 	for {
-		data, err := os.ReadFile(template + strconv.Itoa(i))
-		if os.IsExist(err) == false {
-			fmt.Printf("[%s] Directory is not exist\n", template)
-			return nil, err
-		} else if err != nil {
+		chunkPath := filepath.Join(targetDir, PortionName+strconv.Itoa(i))
+		data, err := os.ReadFile(chunkPath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				if i == 0 {
+					return nil, os.ErrNotExist
+				}
+				break // End of chunks
+			}
 			return nil, err
 		}
 		chunks = append(chunks, data)
 		i++
 	}
-	// PortionDirName = PortionDirNameTmp
-	// return chunks, nil
+	return chunks, nil
 }
 
-func joinChunks(buf [][]byte) []byte {
-	var joined []byte
-	for i := range buf {
-		for j := range buf[i] {
-			joined = append(joined, buf[i][j])
-		}
+func unbzeroChunks(buf [][]byte, originalSize int64) []byte {
+	joined := joinChunks(buf)
+	if int64(len(joined)) > originalSize {
+		return joined[:originalSize]
 	}
 	return joined
 }
 
-func createFileFromChunks(buf [][]byte) {
-	jbuf := joinChunks(buf)
-	err := os.WriteFile("new_"+FileName, jbuf, 0666)
-	if err != nil {
-		log.Fatal()
+func joinChunks(buf [][]byte) []byte {
+	var totalLen int
+	for _, b := range buf {
+		totalLen += len(b)
 	}
+	joined := make([]byte, 0, totalLen)
+	for i := range buf {
+		joined = append(joined, buf[i]...)
+	}
+	return joined
 }
